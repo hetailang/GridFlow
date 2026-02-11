@@ -1,0 +1,50 @@
+.grid-layout {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas-wrapper {
+  width: 90%;
+  max-width: 1200px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.layout-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.content-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.grid-container {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  position: relative;
+  z-index: 1;
+}
+
+.sub-grid {
+  display: grid;
+  width: 100%;
+  height: 100%;
+}
+
+/* 单图布局 */
+.grid-container.single {
+  grid-template-columns: 1fr;
+}
+
+/* 自动网格 */
+.grid-container.grid-auto {
+  grid-auto-rows: 1fr;
+}

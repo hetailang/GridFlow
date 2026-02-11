@@ -1,0 +1,59 @@
+.divider {
+  position: absolute;
+  z-index: 1000;
+  background: rgba(102, 126, 234, 0.05);
+  transition: background-color 0.2s;
+  pointer-events: all;
+}
+
+.divider.horizontal {
+  width: 20px;
+  height: 100%;
+  transform: translateX(-50%);
+  cursor: col-resize;
+}
+
+.divider.vertical {
+  height: 20px;
+  width: 100%;
+  transform: translateY(-50%);
+  cursor: row-resize;
+}
+
+.divider:hover,
+.divider.dragging {
+  background: rgba(102, 126, 234, 0.2);
+}
+
+.divider-handle {
+  position: absolute;
+  background: #667eea;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.divider.horizontal .divider-handle {
+  width: 4px;
+  height: 40px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.divider.vertical .divider-handle {
+  height: 4px;
+  width: 40px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.divider:hover .divider-handle,
+.divider.dragging .divider-handle {
+  opacity: 1;
+}
+
+.divider.dragging .divider-handle {
+  background: #764ba2;
+}
