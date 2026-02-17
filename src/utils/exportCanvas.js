@@ -4,7 +4,10 @@
  * @param {Object} images - 图片数据
  * @param {Object} layoutInfo - 布局信息（包含比例）
  */
-export const exportToImage = async (config, images, layoutInfo) => {
+/**
+ * 渲染拼图到 Canvas
+ */
+const renderToCanvas = async (config, images, layoutInfo) => {
   const { aspectRatio, padding, cornerRadius, backgroundColor, gridCount } = config
 
   // 解析宽高比
@@ -37,6 +40,12 @@ export const exportToImage = async (config, images, layoutInfo) => {
     }
   }
 
+  return canvas
+}
+
+export const exportToImage = async (config, images, layoutInfo) => {
+  const canvas = await renderToCanvas(config, images, layoutInfo)
+
   // 导出为图片
   canvas.toBlob((blob) => {
     const url = URL.createObjectURL(blob)
@@ -46,6 +55,25 @@ export const exportToImage = async (config, images, layoutInfo) => {
     link.click()
     URL.revokeObjectURL(url)
   }, 'image/png')
+}
+
+/**
+ * 复制拼图到剪贴板
+ */
+export const copyToClipboard = async (config, images, layoutInfo) => {
+  const canvas = await renderToCanvas(config, images, layoutInfo)
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error('Failed to create blob'))
+        return
+      }
+      navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': blob })
+      ]).then(resolve).catch(reject)
+    }, 'image/png')
+  })
 }
 
 /**

@@ -104,6 +104,38 @@ GridFlow/
 - 比例范围限制在 20%-80% 之间，确保每个区域都有合理的显示空间
 - 导出时会保持实际调整后的布局比例
 
+## 📒 Changelog
+
+### 2026-02-17
+
+#### 新增：复制图片到剪贴板
+
+在控制面板导出区域新增「📋 复制图片」按钮，可将当前拼图直接复制到系统剪贴板，方便粘贴到微信、飞书、Figma 等应用中，无需先下载文件。
+
+- 按钮带有状态反馈：复制中 → 已复制 / 复制失败，2 秒后自动重置
+- 使用绿色渐变样式，与蓝紫色的导出按钮区分
+
+<details>
+<summary>实现细节</summary>
+
+- 从 `exportToImage` 中提取公共的 `renderToCanvas()` 函数，复用 Canvas 渲染逻辑
+- 新增 `copyToClipboard()` 导出函数，通过 `navigator.clipboard.write` + `ClipboardItem` 将 PNG 写入剪贴板
+- 需要浏览器支持 Clipboard API（主流现代浏览器均已支持）
+
+</details>
+
+#### 修复：Ctrl+V 粘贴图片会填充所有网格
+
+之前每个 `ImageCell` 都在 `document` 上注册了 `paste` 监听器，导致粘贴时所有网格同时接收图片。现已修复为仅将图片粘贴到鼠标悬停的网格中。
+
+<details>
+<summary>实现细节</summary>
+
+- 在 `ImageCell` 中新增 `isHovered` 状态，通过 `onMouseEnter` / `onMouseLeave` 追踪鼠标位置
+- `paste` 事件处理函数中增加 `if (!isHovered) return` 守卫，仅悬停的 cell 响应粘贴
+
+</details>
+
 ## 📋 TODO
 
 - [ ] **自由布局模式** - 支持非对齐网格拼图，图片区域可以独立定位，不受严格行列对齐约束，适合突出核心内容的创意排版。可选方案：

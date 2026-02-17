@@ -132,6 +132,21 @@
   transform: translateY(0);
 }
 
+.copy-button {
+  margin-top: 10px;
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.copy-button:hover {
+  box-shadow: 0 4px 12px rgba(67, 233, 123, 0.4);
+}
+
+.copy-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .hint {
   margin-top: 10px;
   font-size: 12px;

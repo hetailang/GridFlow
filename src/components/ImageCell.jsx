@@ -3,6 +3,7 @@ import './ImageCell.css'
 
 function ImageCell({ cellId, image, onImageUpdate, config }) {
   const [isDragging, setIsDragging] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
   const fileInputRef = useRef(null)
 
   const handleDragOver = (e) => {
@@ -65,9 +66,11 @@ function ImageCell({ cellId, image, onImageUpdate, config }) {
     }
   }
 
-  // 支持剪贴板粘贴
+  // 支持剪贴板粘贴 - 仅在鼠标悬停的网格中生效
   useEffect(() => {
     const handlePaste = (e) => {
+      if (!isHovered) return
+
       const items = e.clipboardData?.items
       if (!items) return
 
@@ -83,7 +86,7 @@ function ImageCell({ cellId, image, onImageUpdate, config }) {
 
     document.addEventListener('paste', handlePaste)
     return () => document.removeEventListener('paste', handlePaste)
-  }, [cellId])
+  }, [cellId, isHovered])
 
   const cellStyle = {
     borderRadius: `${config.cornerRadius}px`,
@@ -100,6 +103,8 @@ function ImageCell({ cellId, image, onImageUpdate, config }) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {!image && (
         <div className="placeholder">

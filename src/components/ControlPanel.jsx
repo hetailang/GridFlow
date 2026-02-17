@@ -1,12 +1,26 @@
-import { useRef } from 'react'
-import { exportToImage } from '../utils/exportCanvas'
+import { useRef, useState } from 'react'
+import { exportToImage, copyToClipboard } from '../utils/exportCanvas'
 import './ControlPanel.css'
 
 function ControlPanel({ config, onConfigChange, images, layout }) {
   const canvasRef = useRef(null)
+  const [copyStatus, setCopyStatus] = useState(null)
 
   const handleExport = () => {
     exportToImage(config, images, layout)
+  }
+
+  const handleCopy = async () => {
+    try {
+      setCopyStatus('copying')
+      await copyToClipboard(config, images, layout)
+      setCopyStatus('success')
+      setTimeout(() => setCopyStatus(null), 2000)
+    } catch (err) {
+      console.error('复制失败:', err)
+      setCopyStatus('error')
+      setTimeout(() => setCopyStatus(null), 2000)
+    }
   }
 
   return (
@@ -95,7 +109,10 @@ function ControlPanel({ config, onConfigChange, images, layout }) {
         <button className="export-button" onClick={handleExport}>
           💾 导出图片
         </button>
-        <p className="hint">导出为高清 PNG 图片</p>
+        <button className="export-button copy-button" onClick={handleCopy} disabled={copyStatus === 'copying'}>
+          {copyStatus === 'copying' ? '⏳ 复制中...' : copyStatus === 'success' ? '✅ 已复制' : copyStatus === 'error' ? '❌ 复制失败' : '📋 复制图片'}
+        </button>
+        <p className="hint">导出或复制为高清 PNG 图片</p>
       </div>
 
       <div className="control-section">
