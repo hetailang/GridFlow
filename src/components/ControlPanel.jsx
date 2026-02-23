@@ -1,19 +1,31 @@
-import { useRef, useState } from 'react'
-import { exportToImage, copyToClipboard } from '../utils/exportCanvas'
+import { useState } from 'react'
+import { exportToImage, copyToClipboard, exportFinetuned, copyFinetuned } from '../utils/exportCanvas'
 import './ControlPanel.css'
 
-function ControlPanel({ config, onConfigChange, images, layout }) {
-  const canvasRef = useRef(null)
+function ControlPanel({
+  config, onConfigChange, images, layout,
+  phase, onEnterFinetune, onReturnToLayout,
+  selectedElement, onElementChange, onLayerChange,
+  elements, canvasDisplaySize,
+}) {
   const [copyStatus, setCopyStatus] = useState(null)
 
   const handleExport = () => {
-    exportToImage(config, images, layout)
+    if (phase === 'finetune') {
+      exportFinetuned(elements, config, canvasDisplaySize.width, canvasDisplaySize.height)
+    } else {
+      exportToImage(config, images, layout)
+    }
   }
 
   const handleCopy = async () => {
     try {
       setCopyStatus('copying')
-      await copyToClipboard(config, images, layout)
+      if (phase === 'finetune') {
+        await copyFinetuned(elements, config, canvasDisplaySize.width, canvasDisplaySize.height)
+      } else {
+        await copyToClipboard(config, images, layout)
+      }
       setCopyStatus('success')
       setTimeout(() => setCopyStatus(null), 2000)
     } catch (err) {
@@ -23,6 +35,119 @@ function ControlPanel({ config, onConfigChange, images, layout }) {
     }
   }
 
+  const handleNumInput = (field, value) => {
+    const n = parseFloat(value)
+    if (!isNaN(n)) onElementChange(selectedElement.id, { [field]: n })
+  }
+
+  if (phase === 'finetune') {
+    return (
+      <div className="control-panel">
+        <h2>精细调整</h2>
+
+        <div className="control-section">
+          <button className="phase-button return-button" onClick={onReturnToLayout}>
+            ← 返回布局调整
+          </button>
+        </div>
+
+        {selectedElement && (
+          <div className="control-section">
+            <h3>选中元素属性</h3>
+
+            <div className="control-row">
+              <div className="control-item half">
+                <label>X</label>
+                <input
+                  type="number"
+                  value={Math.round(selectedElement.x)}
+                  onChange={(e) => handleNumInput('x', e.target.value)}
+                />
+              </div>
+              <div className="control-item half">
+                <label>Y</label>
+                <input
+                  type="number"
+                  value={Math.round(selectedElement.y)}
+                  onChange={(e) => handleNumInput('y', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="control-row">
+              <div className="control-item half">
+                <label>宽</label>
+                <input
+                  type="number"
+                  min="20"
+                  value={Math.round(selectedElement.width)}
+                  onChange={(e) => handleNumInput('width', e.target.value)}
+                />
+              </div>
+              <div className="control-item half">
+                <label>高</label>
+                <input
+                  type="number"
+                  min="20"
+                  value={Math.round(selectedElement.height)}
+                  onChange={(e) => handleNumInput('height', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="control-item">
+              <label>旋转: <span className="value">{Math.round(selectedElement.rotation || 0)}°</span></label>
+              <input
+                type="range"
+                min="-180"
+                max="180"
+                value={selectedElement.rotation || 0}
+                onChange={(e) => handleNumInput('rotation', e.target.value)}
+              />
+            </div>
+
+            <div className="control-item">
+              <label>圆角: <span className="value">{selectedElement.cornerRadius || 0}px</span></label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={selectedElement.cornerRadius || 0}
+                onChange={(e) => handleNumInput('cornerRadius', e.target.value)}
+              />
+            </div>
+
+            <h3>图层顺序</h3>
+            <div className="layer-buttons">
+              <button onClick={() => onLayerChange(selectedElement.id, 'top')}>置顶</button>
+              <button onClick={() => onLayerChange(selectedElement.id, 'up')}>上移</button>
+              <button onClick={() => onLayerChange(selectedElement.id, 'down')}>下移</button>
+              <button onClick={() => onLayerChange(selectedElement.id, 'bottom')}>置底</button>
+            </div>
+          </div>
+        )}
+
+        {!selectedElement && (
+          <div className="control-section">
+            <p className="hint">点击画布中的元素以选中并编辑</p>
+          </div>
+        )}
+
+        <div className="control-section">
+          <h3>导出</h3>
+          <button className="export-button" onClick={handleExport}>
+            💾 导出图片
+          </button>
+          <button className="export-button copy-button" onClick={handleCopy} disabled={copyStatus === 'copying'}>
+            {copyStatus === 'copying' ? '⏳ 复制中...' : copyStatus === 'success' ? '✅ 已复制' : copyStatus === 'error' ? '❌ 复制失败' : '📋 复制图片'}
+          </button>
+          <p className="hint">导出精细调整后的高清 PNG</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Phase 1: layout panel
   return (
     <div className="control-panel">
       <h2>控制面板</h2>
@@ -102,6 +227,12 @@ function ControlPanel({ config, onConfigChange, images, layout }) {
             />
           </div>
         </div>
+      </div>
+
+      <div className="control-section">
+        <button className="phase-button enter-finetune-button" onClick={onEnterFinetune}>
+          进入精细调整 →
+        </button>
       </div>
 
       <div className="control-section">

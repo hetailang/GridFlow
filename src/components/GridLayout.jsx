@@ -16,7 +16,7 @@ const generateLayout = (count) => {
   return { type: 'grid-auto', count }
 }
 
-function GridLayout({ config, images, onImageUpdate, onLayoutChange }) {
+function GridLayout({ config, images, onImageUpdate, onLayoutChange, onCanvasRef }) {
   const [layout, setLayout] = useState(generateLayout(config.gridCount))
   const [aspectRatio, setAspectRatio] = useState(16 / 9)
   const containerRef = useRef(null)
@@ -183,7 +183,7 @@ function GridLayout({ config, images, onImageUpdate, onLayoutChange }) {
   return (
     <div className="grid-layout">
       <div
-        ref={containerRef}
+        ref={(el) => { containerRef.current = el; if (onCanvasRef) onCanvasRef(el) }}
         className="canvas-wrapper"
         style={{ aspectRatio: `${aspectRatio}` }}
       >

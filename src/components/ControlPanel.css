@@ -165,3 +165,81 @@
   padding: 8px 0;
   line-height: 1.5;
 }
+
+/* Phase buttons */
+.phase-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.enter-finetune-button {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.enter-finetune-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(240, 147, 251, 0.4);
+}
+
+.return-button {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.return-button:hover {
+  background: #e0e0e0;
+}
+
+/* Control row (two items side by side) */
+.control-row {
+  display: flex;
+  gap: 10px;
+}
+
+.control-item.half {
+  flex: 1;
+  margin-bottom: 12px;
+}
+
+.control-item input[type="number"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.control-item input[type="number"]:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Layer buttons */
+.layer-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.layer-buttons button {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #f8f8f8;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.layer-buttons button:hover {
+  background: #e8e8e8;
+}

@@ -79,7 +79,7 @@ export const copyToClipboard = async (config, images, layoutInfo) => {
 /**
  * 计算网格布局
  */
-const calculateLayout = (count, width, height, padding, layoutInfo) => {
+export const calculateLayout = (count, width, height, padding, layoutInfo) => {
   const cells = []
 
   // 内容区域（减去外边距）
@@ -319,5 +319,108 @@ const drawImageToCell = (ctx, imageSrc, cell, cornerRadius) => {
     }
 
     img.src = imageSrc
+  })
+}
+
+/**
+ * 将 FinetuneElement 数组渲染到 Canvas（用于精细调整阶段的导出）
+ */
+const renderFinetunedToCanvas = async (elements, config, displayWidth, displayHeight) => {
+  const outputWidth = 2400
+  const scale = outputWidth / displayWidth
+  const outputHeight = Math.round(displayHeight * scale)
+
+  const canvas = document.createElement('canvas')
+  canvas.width = outputWidth
+  canvas.height = outputHeight
+  const ctx = canvas.getContext('2d')
+
+  ctx.fillStyle = config.backgroundColor
+  ctx.fillRect(0, 0, outputWidth, outputHeight)
+
+  for (const el of elements) {
+    if (!el.src) continue
+
+    await new Promise((resolve) => {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => {
+        const { x, y, width, height, rotation, cornerRadius } = el
+        const cx = (x + width / 2) * scale
+        const cy = (y + height / 2) * scale
+        const w = width * scale
+        const h = height * scale
+        const r = (rotation || 0) * Math.PI / 180
+        const cr = (cornerRadius || 0) * scale
+
+        ctx.save()
+        ctx.translate(cx, cy)
+        ctx.rotate(r)
+
+        // 圆角裁切（以中心为原点）
+        if (cr > 0) {
+          const rx = -w / 2
+          const ry = -h / 2
+          ctx.beginPath()
+          ctx.moveTo(rx + cr, ry)
+          ctx.lineTo(rx + w - cr, ry)
+          ctx.quadraticCurveTo(rx + w, ry, rx + w, ry + cr)
+          ctx.lineTo(rx + w, ry + h - cr)
+          ctx.quadraticCurveTo(rx + w, ry + h, rx + w - cr, ry + h)
+          ctx.lineTo(rx + cr, ry + h)
+          ctx.quadraticCurveTo(rx, ry + h, rx, ry + h - cr)
+          ctx.lineTo(rx, ry + cr)
+          ctx.quadraticCurveTo(rx, ry, rx + cr, ry)
+          ctx.closePath()
+          ctx.clip()
+        }
+
+        // object-fit: cover
+        const imgAspect = img.width / img.height
+        const cellAspect = w / h
+        let dw, dh, dx, dy
+        if (imgAspect > cellAspect) {
+          dh = h
+          dw = h * imgAspect
+          dx = -(dw - w) / 2
+          dy = 0
+        } else {
+          dw = w
+          dh = w / imgAspect
+          dx = 0
+          dy = -(dh - h) / 2
+        }
+
+        ctx.drawImage(img, -w / 2 + dx, -h / 2 + dy, dw, dh)
+        ctx.restore()
+        resolve()
+      }
+      img.onerror = () => resolve()
+      img.src = el.src
+    })
+  }
+
+  return canvas
+}
+
+export const exportFinetuned = async (elements, config, displayWidth, displayHeight) => {
+  const canvas = await renderFinetunedToCanvas(elements, config, displayWidth, displayHeight)
+  canvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `gridflow-finetune-${Date.now()}.png`
+    link.click()
+    URL.revokeObjectURL(url)
+  }, 'image/png')
+}
+
+export const copyFinetuned = async (elements, config, displayWidth, displayHeight) => {
+  const canvas = await renderFinetunedToCanvas(elements, config, displayWidth, displayHeight)
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) { reject(new Error('Failed to create blob')); return }
+      navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(resolve).catch(reject)
+    }, 'image/png')
   })
 }
