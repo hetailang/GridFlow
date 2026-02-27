@@ -32,15 +32,16 @@ No test framework is configured. Testing is manual via `npm run dev`.
 - `GridLayout.jsx` — Phase 1. Generates layout structures for 1-9 images using 8 predefined layout types plus auto-grid. Renders cells and dividers. Accepts `onCanvasRef` prop to expose the `.canvas-wrapper` DOM node.
 - `ImageCell.jsx` — Handles image input (drag-and-drop, click-to-select, clipboard paste via Ctrl+V on hovered cell). Uses FileReader API for file→base64 conversion.
 - `Divider.jsx` — Draggable dividers between cells. Converts pixel deltas to percentage ratios (clamped 20%-80%). Uses document-level mouse listeners.
-- `ControlPanel.jsx` — Settings sidebar. Phase 1: layout/styling/export. Phase 2: return button, selected element properties (x/y/w/h/rotation/cornerRadius), layer order buttons, export.
+- `ControlPanel.jsx` — Settings sidebar. Phase 1: layout/styling/export. Phase 2: return button, selected element properties (x/y/w/h/rotation/cornerRadius), crop controls (cropZoom/cropOffsetX/cropOffsetY), layer order buttons, export.
 - `FinetuneCanvas.jsx` — Phase 2 canvas container. `position: relative; width: 90%; max-width: 1200px` (must match `.canvas-wrapper` sizing so element coordinates align). Renders `FinetuneElementItem` per element.
-- `FinetuneElementItem.jsx` — Phase 2 element. Handles move/resize/rotate via document-level mousemove/mouseup. Resize math: anchor stays fixed; new center = midpoint(anchor, mouse); mouse→local via inverse rotation `(dx·cosθ + dy·sinθ, -dx·sinθ + dy·cosθ)`; edge handles project mouse onto local axis before computing center.
+- `FinetuneElementItem.jsx` — Phase 2 element. Handles move/resize/rotate via document-level mousemove/mouseup. Resize math: anchor stays fixed; new center = midpoint(anchor, mouse); mouse→local via inverse rotation `(dx·cosθ + dy·sinθ, -dx·sinθ + dy·cosθ)`; edge handles project mouse onto local axis before computing center. Image crop: `<div overflow:hidden>` wrapper + `<img>` with `transform: translate(-50%,-50%) translate(cropOffsetX%, cropOffsetY%) scale(cropZoom)`.
 
 **FinetuneElement data shape**:
 ```js
-{ id, x, y, width, height, rotation, src, cornerRadius }
+{ id, x, y, width, height, rotation, src, cornerRadius, cropOffsetX, cropOffsetY, cropZoom }
 // x/y in CSS px relative to finetune-canvas; rotation in degrees (CSS clockwise)
 // array index = z-index (higher index = top layer)
+// cropOffsetX/Y: -100 to 100 (%), cropZoom: 0.1 to 2.0 (default 1)
 ```
 
 **Export pipeline** (`utils/exportCanvas.js`):
@@ -48,7 +49,7 @@ No test framework is configured. Testing is manual via `npm run dev`.
 - `calculateLayout()` — converts layout ratios to absolute pixel coordinates (exported, used by both phases)
 - `drawImageToCell()` — renders each image with center-crop and rounded corner clipping via Canvas API
 - `exportToImage()` / `copyToClipboard()` — Phase 1 download/clipboard
-- `renderFinetunedToCanvas()` — Phase 2: scale = 2400/displayWidth; per element: `ctx.translate(cx·scale, cy·scale)` → `ctx.rotate(rad)` → rounded-rect clip → center-crop drawImage
+- `renderFinetunedToCanvas()` — Phase 2: scale = 2400/displayWidth; per element: `ctx.translate(cx·scale, cy·scale)` → `ctx.rotate(rad)` → rounded-rect clip → cover baseW/baseH × cropZoom → offset by cropOffsetX/Y (relative to scaled image size) → drawImage
 - `exportFinetuned()` / `copyFinetuned()` — Phase 2 download/clipboard
 
 ## Conventions

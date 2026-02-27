@@ -117,6 +117,49 @@ function ControlPanel({
               />
             </div>
 
+            {selectedElement.src && (
+              <>
+                <h3>图片裁剪</h3>
+
+                <div className="control-item">
+                  <label>内容缩放: <span className="value">{(selectedElement.cropZoom || 1).toFixed(2)}x</span></label>
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="2"
+                    step="0.05"
+                    value={selectedElement.cropZoom || 1}
+                    onChange={(e) => handleNumInput('cropZoom', e.target.value)}
+                  />
+                  <p className="hint" style={{ fontSize: '11px', margin: '4px 0 0', color: '#999' }}>
+                    &lt;1 显示更多内容 | &gt;1 显示更少内容
+                  </p>
+                </div>
+
+                <div className="control-item">
+                  <label>裁剪偏移 X: <span className="value">{Math.round(selectedElement.cropOffsetX || 0)}%</span></label>
+                  <input
+                    type="range"
+                    min="-100"
+                    max="100"
+                    value={selectedElement.cropOffsetX || 0}
+                    onChange={(e) => handleNumInput('cropOffsetX', e.target.value)}
+                  />
+                </div>
+
+                <div className="control-item">
+                  <label>裁剪偏移 Y: <span className="value">{Math.round(selectedElement.cropOffsetY || 0)}%</span></label>
+                  <input
+                    type="range"
+                    min="-100"
+                    max="100"
+                    value={selectedElement.cropOffsetY || 0}
+                    onChange={(e) => handleNumInput('cropOffsetY', e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
             <h3>图层顺序</h3>
             <div className="layer-buttons">
               <button onClick={() => onLayerChange(selectedElement.id, 'top')}>置顶</button>

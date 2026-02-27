@@ -16,7 +16,7 @@ const HANDLES = [
 ]
 
 function FinetuneElementItem({ element, isSelected, onSelect, onChange, zIndex }) {
-  const { id, x, y, width, height, rotation, src, cornerRadius } = element
+  const { id, x, y, width, height, rotation, src, cornerRadius, cropOffsetX = 0, cropOffsetY = 0, cropZoom = 1 } = element
   const dragState = useRef(null)
 
   const handleMouseDown = (e, actionType) => {
@@ -186,19 +186,36 @@ function FinetuneElementItem({ element, isSelected, onSelect, onChange, zIndex }
       onClick={handleElementClick}
     >
       {src && (
-        <img
-          src={src}
-          alt=""
+        <div
           style={{
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
             borderRadius: `${cornerRadius || 0}px`,
-            pointerEvents: 'none',
-            display: 'block',
+            overflow: 'hidden',
+            position: 'relative',
           }}
-          draggable={false}
-        />
+        >
+          <img
+            src={src}
+            alt=""
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: `translate(-50%, -50%) translate(${cropOffsetX}%, ${cropOffsetY}%) scale(${cropZoom})`,
+              minWidth: '100%',
+              minHeight: '100%',
+              maxWidth: 'none',
+              maxHeight: 'none',
+              width: 'auto',
+              height: 'auto',
+              objectFit: 'cover',
+              pointerEvents: 'none',
+              display: 'block',
+            }}
+            draggable={false}
+          />
+        </div>
       )}
 
       {!src && (

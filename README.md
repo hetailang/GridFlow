@@ -39,6 +39,7 @@
 - **旋转** - 拖动元素正上方的旋转手柄顺时针/逆时针旋转
 - **图层管理** - 上移/下移/置顶/置底调整元素叠放顺序
 - **属性面板** - 精确输入 X/Y/宽/高/旋转角度/圆角数值
+- **图片裁剪** - 调整图片在元素框内的内容缩放（0.1x–2.0x）及 X/Y 偏移，独立于元素大小
 
 ### 6. 高清导出
 - 💾 导出为 2400px 宽度的高清 PNG 图片
@@ -83,7 +84,8 @@ npm run build
 10. **旋转元素** - 拖动元素上方的蓝色圆形旋转手柄
 11. **调整图层** - 在属性面板点击图层按钮调整元素的叠放顺序
 12. **精确调整** - 在属性面板直接输入数值精确控制位置、尺寸、旋转角度、圆角
-13. **导出结果** - 在精细调整面板点击导出或复制，输出 2400px 宽高清 PNG
+13. **图片裁剪** - 在属性面板"图片裁剪"区域调整内容缩放（<1 显示更多内容，>1 放大聚焦）及偏移
+14. **导出结果** - 在精细调整面板点击导出或复制，输出 2400px 宽高清 PNG
 
 ## 🛠 技术栈
 
@@ -117,6 +119,28 @@ GridFlow/
 ---
 
 ## 📒 Changelog
+
+<details>
+<summary><strong>2026-02-27</strong> — 精细调整阶段新增图片裁剪控制</summary>
+
+#### 新增：Phase 2 图片裁剪（内容缩放 + 偏移）
+
+选中精细调整阶段中的图片元素后，控制面板新增"图片裁剪"区域，支持独立于元素尺寸的图片内容调整：
+
+- **内容缩放**（0.10x–2.00x，步进 0.05）：小于 1 时图片缩小、显示更多内容（可留白）；大于 1 时图片放大、聚焦更少区域
+- **裁剪偏移 X / Y**（-100%–+100%）：在缩放基础上左右/上下平移图片显示位置
+- 导出与复制完全同步裁剪参数，确保 2400px 高清输出与预览一致
+
+<details>
+<summary>实现细节</summary>
+
+- `App.jsx` 初始化 elements 时新增 `cropOffsetX: 0, cropOffsetY: 0, cropZoom: 1` 默认值
+- `FinetuneElementItem.jsx` 改用 `<div overflow:hidden>` + `<img>` 嵌套结构；图片通过 `transform: translate(-50%,-50%) translate(cropOffsetX%, cropOffsetY%) scale(cropZoom)` 实现缩放与偏移，`minWidth/minHeight: 100%` 保证基础 cover 填充
+- `exportCanvas.js` 先按 cover 规则计算 `baseW/baseH`，再乘以 `cropZoom` 得到绘制尺寸，最后加上 `cropOffsetX/Y` 相对于缩放后图片尺寸的偏移量
+
+</details>
+
+</details>
 
 <details>
 <summary><strong>2026-02-23</strong> — 新增精细调整阶段（Phase 2）</summary>
@@ -176,7 +200,7 @@ GridFlow/
 
 ## 📋 TODO
 
-- [ ] **Phase 2 图片内部 pan/zoom** - 精细调整阶段支持调整图片在元素框内的显示位置（类似 object-position）
+- [x] **Phase 2 图片内部 pan/zoom** - 精细调整阶段支持调整图片在元素框内的显示位置（类似 object-position）
 - [ ] **Phase 2 键盘快捷键** - Delete 删除选中元素，方向键微移，Esc 取消选中
 
 ## 📄 许可证

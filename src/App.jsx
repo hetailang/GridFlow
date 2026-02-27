@@ -58,6 +58,9 @@ function App() {
       rotation: 0,
       src: images[`cell-${i}`]?.src || null,
       cornerRadius: config.cornerRadius,
+      cropOffsetX: 0,
+      cropOffsetY: 0,
+      cropZoom: 1,
     }))
 
     setElements(newElements)

@@ -345,7 +345,7 @@ const renderFinetunedToCanvas = async (elements, config, displayWidth, displayHe
       const img = new Image()
       img.crossOrigin = 'anonymous'
       img.onload = () => {
-        const { x, y, width, height, rotation, cornerRadius } = el
+        const { x, y, width, height, rotation, cornerRadius, cropOffsetX = 0, cropOffsetY = 0, cropZoom = 1 } = el
         const cx = (x + width / 2) * scale
         const cy = (y + height / 2) * scale
         const w = width * scale
@@ -375,21 +375,34 @@ const renderFinetunedToCanvas = async (elements, config, displayWidth, displayHe
           ctx.clip()
         }
 
-        // object-fit: cover
+        // object-fit: cover - calculate base size to fill the element
         const imgAspect = img.width / img.height
         const cellAspect = w / h
-        let dw, dh, dx, dy
+        let baseW, baseH
+
+        // Calculate base dimensions (before cropZoom and offset)
         if (imgAspect > cellAspect) {
-          dh = h
-          dw = h * imgAspect
-          dx = -(dw - w) / 2
-          dy = 0
+          // Image is wider - fit to height
+          baseH = h
+          baseW = h * imgAspect
         } else {
-          dw = w
-          dh = w / imgAspect
-          dx = 0
-          dy = -(dh - h) / 2
+          // Image is taller - fit to width
+          baseW = w
+          baseH = w / imgAspect
         }
+
+        // Apply cropZoom scaling
+        const dw = baseW * cropZoom
+        const dh = baseH * cropZoom
+
+        // Center by default
+        let dx = -(dw - w) / 2
+        let dy = -(dh - h) / 2
+
+        // Apply cropOffset (percentage relative to the scaled image size)
+        // This matches CSS translate() behavior where % is relative to element's own dimensions
+        dx += (cropOffsetX / 100) * dw
+        dy += (cropOffsetY / 100) * dh
 
         ctx.drawImage(img, -w / 2 + dx, -h / 2 + dy, dw, dh)
         ctx.restore()
