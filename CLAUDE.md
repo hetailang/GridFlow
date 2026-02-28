@@ -28,20 +28,22 @@ No test framework is configured. Testing is manual via `npm run dev`.
 **State flow**: Top-down props from `App.jsx`, which holds all root state (config, images, layout) via React hooks (`useState`, `useCallback`, `useRef`). No external state management library.
 
 **Key components**:
-- `App.jsx` — Root state: grid count, aspect ratio, padding, corner radius, background color, images map, layout ratios. Also holds `phase` (`'layout'`|`'finetune'`), `elements` (FinetuneElement[]), `canvasDisplaySize`, `selectedId`. `handleEnterFinetune` reads the grid canvas `getBoundingClientRect`, calls `calculateLayout`, builds the elements array, then switches phase.
+- `App.jsx` — Root state: grid count, aspect ratio, padding, corner radius, background color, images map, layout ratios. Also holds `phase` (`'layout'`|`'finetune'`), `elements` (FinetuneElement[]), `canvasDisplaySize`, `selectedId`. `handleEnterFinetune` uses `querySelectorAll('.image-cell')` + `getBoundingClientRect()` to read actual rendered cell positions from the DOM (avoids `calculateLayout` vs CSS Grid pixel discrepancy), then builds the elements array and switches phase. Also exposes `handleImageSwap` to swap two cells' image data atomically.
 - `GridLayout.jsx` — Phase 1. Generates layout structures for 1-9 images using 8 predefined layout types plus auto-grid. Renders cells and dividers. Accepts `onCanvasRef` prop to expose the `.canvas-wrapper` DOM node.
-- `ImageCell.jsx` — Handles image input (drag-and-drop, click-to-select, clipboard paste via Ctrl+V on hovered cell). Uses FileReader API for file→base64 conversion.
+- `ImageCell.jsx` — Handles image input (drag-and-drop, click-to-select, clipboard paste via Ctrl+V on hovered cell). Uses FileReader API for file→base64 conversion. Also supports drag-to-swap between cells: `draggable={!!image}`, sets `dataTransfer` type `application/gridflow-cell` on drag start; `handleDrop` checks this type first to call `onImageSwap`, falling back to file-drop otherwise.
 - `Divider.jsx` — Draggable dividers between cells. Converts pixel deltas to percentage ratios (clamped 20%-80%). Uses document-level mouse listeners.
 - `ControlPanel.jsx` — Settings sidebar. Phase 1: layout/styling/export. Phase 2: return button, selected element properties (x/y/w/h/rotation/cornerRadius), crop controls (cropZoom/cropOffsetX/cropOffsetY), layer order buttons, export.
 - `FinetuneCanvas.jsx` — Phase 2 canvas container. `position: relative; width: 90%; max-width: 1200px` (must match `.canvas-wrapper` sizing so element coordinates align). Renders `FinetuneElementItem` per element.
-- `FinetuneElementItem.jsx` — Phase 2 element. Handles move/resize/rotate via document-level mousemove/mouseup. Resize math: anchor stays fixed; new center = midpoint(anchor, mouse); mouse→local via inverse rotation `(dx·cosθ + dy·sinθ, -dx·sinθ + dy·cosθ)`; edge handles project mouse onto local axis before computing center. Image crop: `<div overflow:hidden>` wrapper + `<img>` with `transform: translate(-50%,-50%) translate(cropOffsetX%, cropOffsetY%) scale(cropZoom)`.
+- `FinetuneElementItem.jsx` — Phase 2 element. Handles move/resize/rotate via document-level mousemove/mouseup. Resize math: anchor stays fixed; new center = midpoint(anchor, mouse); mouse→local via inverse rotation `(dx·cosθ + dy·sinθ, -dx·sinθ + dy·cosθ)`; edge handles project mouse onto local axis before computing center. Image rendering: cover dimensions computed explicitly in JS from `naturalWidth/naturalHeight` — `baseW/baseH` = cover fit, `drawW/drawH = base × cropZoom`, `drawLeft/drawTop = (size - draw)/2 + (cropOffset/100) × base`; img positioned with absolute pixels inside `<div overflow:hidden>`. This matches the canvas export formula exactly.
 
 **FinetuneElement data shape**:
 ```js
-{ id, x, y, width, height, rotation, src, cornerRadius, cropOffsetX, cropOffsetY, cropZoom }
+{ id, x, y, width, height, rotation, src, naturalWidth, naturalHeight, cornerRadius, cropOffsetX, cropOffsetY, cropZoom }
 // x/y in CSS px relative to finetune-canvas; rotation in degrees (CSS clockwise)
 // array index = z-index (higher index = top layer)
+// naturalWidth/naturalHeight: original image pixel dimensions (from images[cellId].width/height), used to compute cover size
 // cropOffsetX/Y: -100 to 100 (%), cropZoom: 0.1 to 2.0 (default 1)
+// cropOffset % is relative to cover base size (baseW/baseH), not the element box or zoomed size
 ```
 
 **Export pipeline** (`utils/exportCanvas.js`):
@@ -49,7 +51,7 @@ No test framework is configured. Testing is manual via `npm run dev`.
 - `calculateLayout()` — converts layout ratios to absolute pixel coordinates (exported, used by both phases)
 - `drawImageToCell()` — renders each image with center-crop and rounded corner clipping via Canvas API
 - `exportToImage()` / `copyToClipboard()` — Phase 1 download/clipboard
-- `renderFinetunedToCanvas()` — Phase 2: scale = 2400/displayWidth; per element: `ctx.translate(cx·scale, cy·scale)` → `ctx.rotate(rad)` → rounded-rect clip → cover baseW/baseH × cropZoom → offset by cropOffsetX/Y (relative to scaled image size) → drawImage
+- `renderFinetunedToCanvas()` — Phase 2: scale = 2400/displayWidth; per element: `ctx.translate(cx·scale, cy·scale)` → `ctx.rotate(rad)` → rounded-rect clip → cover baseW/baseH (from img.width/height vs w/h) × cropZoom → offset by `cropOffsetX/Y` **relative to baseW/baseH** (not zoomed size) → drawImage
 - `exportFinetuned()` / `copyFinetuned()` — Phase 2 download/clipboard
 
 ## Conventions
@@ -57,7 +59,7 @@ No test framework is configured. Testing is manual via `npm run dev`.
 - Functional components with hooks only
 - Event handlers prefixed with `handle*`
 - CSS uses BEM-like naming (`.control-section`, `.delete-button`)
-- State classes: `.dragging`, `.has-image`
+- State classes: `.dragging`, `.has-image`, `.drag-source` (cell being dragged), `.drag-target` (internal drag hovering over cell)
 - `fabric` is listed as a dependency but not imported anywhere (legacy/future)
 
 ## Layout Types

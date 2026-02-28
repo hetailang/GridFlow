@@ -24,6 +24,7 @@
 
 ### 3. 图片管理
 - ✕ **删除功能** - 鼠标悬停时在图片右上角显示删除按钮
+- 🔀 **拖拽换位** - 在布局调整阶段，直接将已有图片拖拽到另一个格子即可互换位置
 - 🎯 **智能裁剪** - 自动 Center Crop 填充容器
 
 ### 4. 样式自定义
@@ -71,7 +72,7 @@ npm run build
 
 1. **选择图片数量** - 在右侧控制面板选择要拼接的图片数量
 2. **添加图片** - 通过拖放、点击或粘贴方式添加图片
-3. **调整布局** - 拖动图片之间的分隔线调整区域大小
+3. **调整布局** - 拖动图片之间的分隔线调整区域大小；拖动已有图片到另一格可互换位置
 4. **自定义样式** - 调整间距、圆角、背景色等参数
 5. **删除图片** - 鼠标悬停在图片上，点击右上角的删除按钮
 6. **导出拼图** - 点击"导出图片"按钮下载最终作品
@@ -119,6 +120,39 @@ GridFlow/
 ---
 
 ## 📒 Changelog
+
+<details>
+<summary><strong>2026-02-28</strong> — 布局阶段图片拖拽换位 / 修复精细调整导出与预览不一致</summary>
+
+#### 新增：Phase 1 图片拖拽换位
+
+在布局调整阶段，已上传图片的格子现在可直接拖拽到其他格子进行换位：
+
+- 鼠标悬停在有图片的格子上显示 `grab` 光标，提示可拖拽
+- 拖拽中源格子半透明淡出，目标格子显示蓝色描边高亮
+- 松手后两格图片完整互换（含宽高元数据）；拖到同一格无操作
+- 外部文件拖入行为不受影响（通过 `dataTransfer` 类型区分内部/外部拖拽）
+
+#### 修复：Phase 2 导出与预览缩放比例不一致（三层根因）
+
+进入精细调整阶段后，导出图片与预览显示的图片缩放比例不一致。根因分三层：
+
+1. **cropOffset 系数错误**：canvas 导出中偏移量基于缩放后尺寸 (`baseW × cropZoom`) 计算，而 CSS `translate(%)` 始终以元素原始尺寸为基准，修正为以 `baseW`（cover 原始尺寸）为基准
+2. **calculateLayout vs CSS Grid 精度差**：Phase 2 元素原先由 `calculateLayout` 手工计算初始化，结果与浏览器 CSS Grid 实际渲染尺寸存在 `padding/2` 的偏差，修正为在 `handleEnterFinetune` 中通过 `querySelectorAll('.image-cell') + getBoundingClientRect()` 直接读取 DOM 真实位置和尺寸
+3. **img 渲染与 background-size: cover 行为不等价**：Phase 1 使用 CSS 背景 `background-size: cover` 会将图片缩放至容器大小；Phase 2 使用 `<img minWidth/minHeight: 100%; width: auto>` 时，对自然尺寸已超过容器的图片（如照片）不会触发缩放，导致视觉上"放大"，修正为在 `FinetuneElementItem` 中用 JS 显式计算 cover 尺寸，与 canvas 导出公式完全一致
+
+<details>
+<summary>实现细节</summary>
+
+- `exportCanvas.js` `renderFinetunedToCanvas`：cropOffset 改为相对于 `baseW/baseH`（cover 原始尺寸），而非 `dw/dh`（已乘 cropZoom 的绘制尺寸）
+- `App.jsx` `handleEnterFinetune`：用 `querySelectorAll('.image-cell')` + `getBoundingClientRect()` 读取真实格子位置，替代 `calculateLayout` 计算；同时传递 `naturalWidth/naturalHeight`（来自 `images[cellId].width/height`）
+- `FinetuneElementItem.jsx`：移除 `minWidth/minHeight/objectFit` CSS 方案，改为根据 `naturalWidth/naturalHeight` 和当前 `width/height` 显式计算 `baseW/baseH/drawW/drawH/drawLeft/drawTop`，直接设为 img 的绝对像素样式
+- `ImageCell.jsx`：新增 `draggable={!!image}`、`onDragStart`（写入 `application/gridflow-cell` 类型标识）、`onDragEnd`、`isDragSource`/`isDragTarget` 状态；`handleDrop` 优先检测内部拖拽并调用 `onImageSwap`
+- `App.jsx` 新增 `handleImageSwap`，原子性交换 `images` map 中两个 key 的值
+
+</details>
+
+</details>
 
 <details>
 <summary><strong>2026-02-27</strong> — 精细调整阶段新增图片裁剪控制</summary>

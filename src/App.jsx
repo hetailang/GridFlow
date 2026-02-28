@@ -2,7 +2,6 @@ import { useState, useCallback, useRef } from 'react'
 import GridLayout from './components/GridLayout'
 import FinetuneCanvas from './components/FinetuneCanvas'
 import ControlPanel from './components/ControlPanel'
-import { calculateLayout } from './utils/exportCanvas'
 import './App.css'
 
 function App() {
@@ -31,6 +30,16 @@ function App() {
     setImages(prev => ({ ...prev, [cellId]: imageData }))
   }, [])
 
+  const handleImageSwap = useCallback((sourceId, targetId) => {
+    setImages(prev => {
+      const next = { ...prev }
+      const temp = next[sourceId]
+      next[sourceId] = next[targetId]
+      next[targetId] = temp
+      return next
+    })
+  }, [])
+
   const handleLayoutChange = useCallback((newLayout) => {
     setLayout(newLayout)
   }, [])
@@ -43,31 +52,38 @@ function App() {
     const canvasEl = gridCanvasRef.current
     if (!canvasEl) return
 
-    const rect = canvasEl.getBoundingClientRect()
-    const displayWidth = rect.width
-    const displayHeight = rect.height
+    const canvasRect = canvasEl.getBoundingClientRect()
+    const displayWidth = canvasRect.width
+    const displayHeight = canvasRect.height
 
-    const cells = calculateLayout(config.gridCount, displayWidth, displayHeight, config.padding, layout)
-
-    const newElements = cells.map((cell, i) => ({
-      id: `cell-${i}`,
-      x: cell.x,
-      y: cell.y,
-      width: cell.width,
-      height: cell.height,
-      rotation: 0,
-      src: images[`cell-${i}`]?.src || null,
-      cornerRadius: config.cornerRadius,
-      cropOffsetX: 0,
-      cropOffsetY: 0,
-      cropZoom: 1,
-    }))
+    // 直接从 DOM 读取每个格子的实际渲染位置和尺寸
+    // 避免 calculateLayout 与 CSS Grid 百分比列宽计算的精度差异
+    const cellEls = canvasEl.querySelectorAll('.image-cell')
+    const newElements = Array.from(cellEls).map((cellEl, i) => {
+      const cellRect = cellEl.getBoundingClientRect()
+      const imgData = images[`cell-${i}`]
+      return {
+        id: `cell-${i}`,
+        x: cellRect.left - canvasRect.left,
+        y: cellRect.top - canvasRect.top,
+        width: cellRect.width,
+        height: cellRect.height,
+        rotation: 0,
+        src: imgData?.src || null,
+        naturalWidth: imgData?.width || null,
+        naturalHeight: imgData?.height || null,
+        cornerRadius: config.cornerRadius,
+        cropOffsetX: 0,
+        cropOffsetY: 0,
+        cropZoom: 1,
+      }
+    })
 
     setElements(newElements)
     setCanvasDisplaySize({ width: displayWidth, height: displayHeight })
     setSelectedId(null)
     setPhase('finetune')
-  }, [config, images, layout])
+  }, [config, images])
 
   const handleReturnToLayout = useCallback(() => {
     setPhase('layout')
@@ -108,6 +124,7 @@ function App() {
               config={config}
               images={images}
               onImageUpdate={handleImageUpdate}
+              onImageSwap={handleImageSwap}
               onLayoutChange={handleLayoutChange}
               onCanvasRef={handleCanvasRef}
             />

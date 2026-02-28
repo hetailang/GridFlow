@@ -16,7 +16,36 @@ const HANDLES = [
 ]
 
 function FinetuneElementItem({ element, isSelected, onSelect, onChange, zIndex }) {
-  const { id, x, y, width, height, rotation, src, cornerRadius, cropOffsetX = 0, cropOffsetY = 0, cropZoom = 1 } = element
+  const { id, x, y, width, height, rotation, src, cornerRadius,
+          cropOffsetX = 0, cropOffsetY = 0, cropZoom = 1,
+          naturalWidth, naturalHeight } = element
+
+  // 与 canvas 导出完全一致的显式 cover 计算
+  // 避免 CSS minWidth/minHeight 对大尺寸图片不触发缩放的问题
+  let imgStyle = null
+  if (src && naturalWidth && naturalHeight) {
+    const imgAspect = naturalWidth / naturalHeight
+    const cellAspect = width / height
+    let baseW, baseH
+    if (imgAspect > cellAspect) {
+      baseH = height; baseW = height * imgAspect
+    } else {
+      baseW = width; baseH = width / imgAspect
+    }
+    const drawW = baseW * cropZoom
+    const drawH = baseH * cropZoom
+    const drawLeft = (width - drawW) / 2 + (cropOffsetX / 100) * baseW
+    const drawTop  = (height - drawH) / 2 + (cropOffsetY / 100) * baseH
+    imgStyle = {
+      position: 'absolute',
+      left: `${drawLeft}px`,
+      top: `${drawTop}px`,
+      width: `${drawW}px`,
+      height: `${drawH}px`,
+      pointerEvents: 'none',
+      display: 'block',
+    }
+  }
   const dragState = useRef(null)
 
   const handleMouseDown = (e, actionType) => {
@@ -185,7 +214,7 @@ function FinetuneElementItem({ element, isSelected, onSelect, onChange, zIndex }
       onMouseDown={(e) => handleMouseDown(e, 'move')}
       onClick={handleElementClick}
     >
-      {src && (
+      {src && imgStyle && (
         <div
           style={{
             width: '100%',
@@ -198,21 +227,7 @@ function FinetuneElementItem({ element, isSelected, onSelect, onChange, zIndex }
           <img
             src={src}
             alt=""
-            style={{
-              position: 'absolute',
-              left: '50%',
-              top: '50%',
-              transform: `translate(-50%, -50%) translate(${cropOffsetX}%, ${cropOffsetY}%) scale(${cropZoom})`,
-              minWidth: '100%',
-              minHeight: '100%',
-              maxWidth: 'none',
-              maxHeight: 'none',
-              width: 'auto',
-              height: 'auto',
-              objectFit: 'cover',
-              pointerEvents: 'none',
-              display: 'block',
-            }}
+            style={imgStyle}
             draggable={false}
           />
         </div>

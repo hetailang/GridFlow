@@ -16,7 +16,7 @@ const generateLayout = (count) => {
   return { type: 'grid-auto', count }
 }
 
-function GridLayout({ config, images, onImageUpdate, onLayoutChange, onCanvasRef }) {
+function GridLayout({ config, images, onImageUpdate, onImageSwap, onLayoutChange, onCanvasRef }) {
   const [layout, setLayout] = useState(generateLayout(config.gridCount))
   const [aspectRatio, setAspectRatio] = useState(16 / 9)
   const containerRef = useRef(null)
@@ -65,7 +65,7 @@ function GridLayout({ config, images, onImageUpdate, onLayoutChange, onCanvasRef
       case 'single':
         return wrap(
           <div className="grid-container" style={{ gridTemplateColumns: '1fr' }}>
-            <ImageCell cellId="cell-0" image={images['cell-0']} onImageUpdate={onImageUpdate} config={config} />
+            <ImageCell cellId="cell-0" image={images['cell-0']} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
           </div>,
           null
         )
@@ -73,8 +73,8 @@ function GridLayout({ config, images, onImageUpdate, onLayoutChange, onCanvasRef
       case 'horizontal':
         return wrap(
           <div className="grid-container" style={{ gridTemplateColumns: `${layout.ratioX}% ${100 - layout.ratioX}%`, gap }}>
-            <ImageCell cellId="cell-0" image={images['cell-0']} onImageUpdate={onImageUpdate} config={config} />
-            <ImageCell cellId="cell-1" image={images['cell-1']} onImageUpdate={onImageUpdate} config={config} />
+            <ImageCell cellId="cell-0" image={images['cell-0']} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
+            <ImageCell cellId="cell-1" image={images['cell-1']} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
           </div>,
           <Divider direction="horizontal" position={layout.ratioX} onDrag={(v) => handleDividerDrag('ratioX', v)} />
         )
@@ -82,10 +82,10 @@ function GridLayout({ config, images, onImageUpdate, onLayoutChange, onCanvasRef
       case 'left-right-1x2':
         return wrap(
           <div className="grid-container" style={{ gridTemplateColumns: `${layout.ratioX}% ${100 - layout.ratioX}%`, gridTemplateRows: '100%', gap }}>
-            <ImageCell cellId="cell-0" image={images['cell-0']} onImageUpdate={onImageUpdate} config={config} />
+            <ImageCell cellId="cell-0" image={images['cell-0']} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
             <div className="sub-grid content-wrapper" style={{ gridTemplateRows: `${layout.ratioY}% ${100 - layout.ratioY}%`, gap, position: 'relative' }}>
-              <ImageCell cellId="cell-1" image={images['cell-1']} onImageUpdate={onImageUpdate} config={config} />
-              <ImageCell cellId="cell-2" image={images['cell-2']} onImageUpdate={onImageUpdate} config={config} />
+              <ImageCell cellId="cell-1" image={images['cell-1']} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
+              <ImageCell cellId="cell-2" image={images['cell-2']} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
               <Divider direction="vertical" position={layout.ratioY} onDrag={(v) => handleDividerDrag('ratioY', v)} />
             </div>
           </div>,
@@ -96,7 +96,7 @@ function GridLayout({ config, images, onImageUpdate, onLayoutChange, onCanvasRef
         return wrap(
           <div className="grid-container" style={{ gridTemplateColumns: `${layout.ratioX}% ${100 - layout.ratioX}%`, gridTemplateRows: `${layout.ratioY}% ${100 - layout.ratioY}%`, gap }}>
             {[0, 1, 2, 3].map(i => (
-              <ImageCell key={i} cellId={`cell-${i}`} image={images[`cell-${i}`]} onImageUpdate={onImageUpdate} config={config} />
+              <ImageCell key={i} cellId={`cell-${i}`} image={images[`cell-${i}`]} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
             ))}
           </div>,
           <>
@@ -108,10 +108,10 @@ function GridLayout({ config, images, onImageUpdate, onLayoutChange, onCanvasRef
       case 'left-right-2x2':
         return wrap(
           <div className="grid-container" style={{ gridTemplateColumns: `${layout.ratioX}% ${100 - layout.ratioX}%`, gridTemplateRows: '100%', gap }}>
-            <ImageCell cellId="cell-0" image={images['cell-0']} onImageUpdate={onImageUpdate} config={config} />
+            <ImageCell cellId="cell-0" image={images['cell-0']} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
             <div className="sub-grid content-wrapper" style={{ gridTemplateColumns: '1fr 1fr', gridTemplateRows: `${layout.ratioY}% ${100 - layout.ratioY}%`, gap, position: 'relative' }}>
               {[1, 2, 3, 4].map(i => (
-                <ImageCell key={i} cellId={`cell-${i}`} image={images[`cell-${i}`]} onImageUpdate={onImageUpdate} config={config} />
+                <ImageCell key={i} cellId={`cell-${i}`} image={images[`cell-${i}`]} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
               ))}
               <Divider direction="vertical" position={layout.ratioY} onDrag={(v) => handleDividerDrag('ratioY', v)} />
             </div>
@@ -123,7 +123,7 @@ function GridLayout({ config, images, onImageUpdate, onLayoutChange, onCanvasRef
         return wrap(
           <div className="grid-container" style={{ gridTemplateColumns: `${layout.ratioX}% ${100 - layout.ratioX}%`, gridTemplateRows: `${layout.ratioY1}% ${layout.ratioY2 - layout.ratioY1}% ${100 - layout.ratioY2}%`, gap }}>
             {[0, 1, 2, 3, 4, 5].map(i => (
-              <ImageCell key={i} cellId={`cell-${i}`} image={images[`cell-${i}`]} onImageUpdate={onImageUpdate} config={config} />
+              <ImageCell key={i} cellId={`cell-${i}`} image={images[`cell-${i}`]} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
             ))}
           </div>,
           <>
@@ -136,10 +136,10 @@ function GridLayout({ config, images, onImageUpdate, onLayoutChange, onCanvasRef
       case 'left-right-2x3':
         return wrap(
           <div className="grid-container" style={{ gridTemplateColumns: `${layout.ratioX}% ${100 - layout.ratioX}%`, gridTemplateRows: '100%', gap }}>
-            <ImageCell cellId="cell-0" image={images['cell-0']} onImageUpdate={onImageUpdate} config={config} />
+            <ImageCell cellId="cell-0" image={images['cell-0']} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
             <div className="sub-grid content-wrapper" style={{ gridTemplateColumns: '1fr 1fr', gridTemplateRows: `${layout.ratioY1}% ${layout.ratioY2 - layout.ratioY1}% ${100 - layout.ratioY2}%`, gap, position: 'relative' }}>
               {[1, 2, 3, 4, 5, 6].map(i => (
-                <ImageCell key={i} cellId={`cell-${i}`} image={images[`cell-${i}`]} onImageUpdate={onImageUpdate} config={config} />
+                <ImageCell key={i} cellId={`cell-${i}`} image={images[`cell-${i}`]} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
               ))}
               <Divider direction="vertical" position={layout.ratioY1} onDrag={(v) => handleDividerDrag('ratioY1', v)} />
               <Divider direction="vertical" position={layout.ratioY2} onDrag={(v) => handleDividerDrag('ratioY2', v)} />
@@ -152,13 +152,13 @@ function GridLayout({ config, images, onImageUpdate, onLayoutChange, onCanvasRef
         return wrap(
           <div className="grid-container" style={{ gridTemplateColumns: `${layout.ratioX}% ${100 - layout.ratioX}%`, gridTemplateRows: '100%', gap }}>
             <div className="sub-grid content-wrapper" style={{ gridTemplateRows: `${layout.ratioYLeft}% ${100 - layout.ratioYLeft}%`, gap, position: 'relative' }}>
-              <ImageCell cellId="cell-0" image={images['cell-0']} onImageUpdate={onImageUpdate} config={config} />
-              <ImageCell cellId="cell-1" image={images['cell-1']} onImageUpdate={onImageUpdate} config={config} />
+              <ImageCell cellId="cell-0" image={images['cell-0']} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
+              <ImageCell cellId="cell-1" image={images['cell-1']} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
               <Divider direction="vertical" position={layout.ratioYLeft} onDrag={(v) => handleDividerDrag('ratioYLeft', v)} />
             </div>
             <div className="sub-grid content-wrapper" style={{ gridTemplateColumns: '1fr 1fr', gridTemplateRows: `${layout.ratioY1}% ${layout.ratioY2 - layout.ratioY1}% ${100 - layout.ratioY2}%`, gap, position: 'relative' }}>
               {[2, 3, 4, 5, 6, 7].map(i => (
-                <ImageCell key={i} cellId={`cell-${i}`} image={images[`cell-${i}`]} onImageUpdate={onImageUpdate} config={config} />
+                <ImageCell key={i} cellId={`cell-${i}`} image={images[`cell-${i}`]} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
               ))}
               <Divider direction="vertical" position={layout.ratioY1} onDrag={(v) => handleDividerDrag('ratioY1', v)} />
               <Divider direction="vertical" position={layout.ratioY2} onDrag={(v) => handleDividerDrag('ratioY2', v)} />
@@ -173,7 +173,7 @@ function GridLayout({ config, images, onImageUpdate, onLayoutChange, onCanvasRef
         return (
           <div className="grid-container grid-auto" style={{ backgroundColor: config.backgroundColor, padding: `${padding}px`, gap, gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
             {Array.from({ length: config.gridCount }).map((_, i) => (
-              <ImageCell key={i} cellId={`cell-${i}`} image={images[`cell-${i}`]} onImageUpdate={onImageUpdate} config={config} />
+              <ImageCell key={i} cellId={`cell-${i}`} image={images[`cell-${i}`]} onImageUpdate={onImageUpdate} onImageSwap={onImageSwap} config={config} />
             ))}
           </div>
         )

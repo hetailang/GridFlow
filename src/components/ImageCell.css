@@ -24,11 +24,23 @@
 
 .image-cell.has-image {
   border: none;
+  cursor: grab;
 }
 
 .image-cell.has-image:hover {
   opacity: 0.9;
   transform: scale(1);
+}
+
+.image-cell.drag-source {
+  opacity: 0.45;
+  cursor: grabbing;
+}
+
+.image-cell.drag-target {
+  outline: 3px solid #667eea;
+  outline-offset: -3px;
+  opacity: 0.75;
 }
 
 .placeholder {

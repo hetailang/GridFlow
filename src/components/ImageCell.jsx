@@ -1,28 +1,61 @@
 import { useRef, useEffect, useState } from 'react'
 import './ImageCell.css'
 
-function ImageCell({ cellId, image, onImageUpdate, config }) {
-  const [isDragging, setIsDragging] = useState(false)
+function ImageCell({ cellId, image, onImageUpdate, onImageSwap, config }) {
+  const [isDragging, setIsDragging] = useState(false)    // 外部文件拖入悬浮
+  const [isDragSource, setIsDragSource] = useState(false) // 本格正被拖拽
+  const [isDragTarget, setIsDragTarget] = useState(false) // 内部拖拽悬浮在本格
   const [isHovered, setIsHovered] = useState(false)
   const fileInputRef = useRef(null)
+
+  // 判断当前拖拽是否为内部单元格拖拽
+  const isInternalDrag = (e) => e.dataTransfer.types.includes('application/gridflow-cell')
+
+  const handleDragStart = (e) => {
+    if (!image) { e.preventDefault(); return }
+    e.dataTransfer.setData('application/gridflow-cell', cellId)
+    e.dataTransfer.effectAllowed = 'move'
+    setIsDragSource(true)
+  }
+
+  const handleDragEnd = () => {
+    setIsDragSource(false)
+  }
 
   const handleDragOver = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsDragging(true)
+    if (isInternalDrag(e)) {
+      e.dataTransfer.dropEffect = 'move'
+      setIsDragTarget(true)
+    } else {
+      setIsDragging(true)
+    }
   }
 
   const handleDragLeave = (e) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
+    setIsDragTarget(false)
   }
 
   const handleDrop = (e) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
+    setIsDragTarget(false)
 
+    const sourceCellId = e.dataTransfer.getData('application/gridflow-cell')
+    if (sourceCellId) {
+      // 内部拖拽：交换两个格子的图片
+      if (sourceCellId !== cellId && onImageSwap) {
+        onImageSwap(sourceCellId, cellId)
+      }
+      return
+    }
+
+    // 外部文件拖入
     const files = e.dataTransfer.files
     if (files && files[0]) {
       handleFileSelect(files[0])
@@ -95,10 +128,21 @@ function ImageCell({ cellId, image, onImageUpdate, config }) {
     backgroundPosition: 'center'
   }
 
+  const classNames = [
+    'image-cell',
+    isDragging ? 'dragging' : '',
+    image ? 'has-image' : '',
+    isDragSource ? 'drag-source' : '',
+    isDragTarget ? 'drag-target' : '',
+  ].filter(Boolean).join(' ')
+
   return (
     <div
-      className={`image-cell ${isDragging ? 'dragging' : ''} ${image ? 'has-image' : ''}`}
+      className={classNames}
       style={cellStyle}
+      draggable={!!image}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

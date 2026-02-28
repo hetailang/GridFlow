@@ -399,10 +399,10 @@ const renderFinetunedToCanvas = async (elements, config, displayWidth, displayHe
         let dx = -(dw - w) / 2
         let dy = -(dh - h) / 2
 
-        // Apply cropOffset (percentage relative to the scaled image size)
-        // This matches CSS translate() behavior where % is relative to element's own dimensions
-        dx += (cropOffsetX / 100) * dw
-        dy += (cropOffsetY / 100) * dh
+        // Apply cropOffset (percentage relative to the BASE cover size, not the zoomed size)
+        // CSS translate(X%) uses the element's pre-transform (un-zoomed) dimensions as reference
+        dx += (cropOffsetX / 100) * baseW
+        dy += (cropOffsetY / 100) * baseH
 
         ctx.drawImage(img, -w / 2 + dx, -h / 2 + dy, dw, dh)
         ctx.restore()
