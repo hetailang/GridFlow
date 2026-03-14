@@ -122,6 +122,23 @@ function ControlPanel({
                 <h3>图片裁剪</h3>
 
                 <div className="control-item">
+                  <button
+                    className="fit-image-button"
+                    onClick={() => {
+                      const { width, naturalWidth, naturalHeight } = selectedElement
+                      onElementChange(selectedElement.id, {
+                        height: width * (naturalHeight / naturalWidth),
+                        cropZoom: 1,
+                        cropOffsetX: 0,
+                        cropOffsetY: 0,
+                      })
+                    }}
+                  >
+                    自适应图片大小
+                  </button>
+                </div>
+
+                <div className="control-item">
                   <label>内容缩放: <span className="value">{(selectedElement.cropZoom || 1).toFixed(2)}x</span></label>
                   <input
                     type="range"

@@ -222,6 +222,25 @@
   border-color: #667eea;
 }
 
+/* Fit image button */
+.fit-image-button {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #667eea;
+  border-radius: 6px;
+  background: #f0f2ff;
+  color: #667eea;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.fit-image-button:hover {
+  background: #667eea;
+  color: white;
+}
+
 /* Layer buttons */
 .layer-buttons {
   display: grid;
